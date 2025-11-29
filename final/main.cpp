@@ -2,7 +2,7 @@
 #include <string>
 using namespace std;
 
-/* ===================== STRUCTS ===================== */
+/* ==================== STRUCTS ===================== */
 struct Kursus {
     string idKursus;
     string namaKursus;
