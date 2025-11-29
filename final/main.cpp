@@ -3,7 +3,6 @@
 using namespace std;
 
 /* ===================== STRUCTS ===================== */
-
 struct Kursus {
     string idKursus;
     string namaKursus;
@@ -15,7 +14,7 @@ struct Peserta {
     string idPeserta;
     string nama;
     char jenisKelamin;
-    double saldo;
+    int saldo;
 };
 
 struct elmChild;
