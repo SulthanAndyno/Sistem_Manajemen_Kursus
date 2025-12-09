@@ -1,8 +1,24 @@
+// mll_typeA_final.cpp
+// Sistem Manajemen Kursus & Peserta (Multi Linked List - TIPE A)
+// - Parent: Single Linked List (SLL)
+// - Child : Double Linked List (DLL)
+// - Relasi: disimpan di setiap parent (list relasi yang menunjuk ke node child)
+
 #include <iostream>
 #include <string>
 using namespace std;
 
-/* ==================== STRUCTS ===================== */
+/* =========================
+   TIPE DATA (STRUCT)
+   =========================
+   Parent (Kursus)  : 4 atribut (id, nama, durasi int, sertifikat bool)
+   Child  (Peserta) : 4 atribut (id, nama, jenisKelamin char, saldo int)
+   Nodes:
+    - elmParent: info Kursus, next (SLL), childList (head of relasi)
+    - elmChild : info Peserta, next + prev (DLL)
+    - elmRelasi : pointer to elmChild, next (SLL for relasi chain)
+*/
+
 struct Kursus {
     string idKursus;
     string namaKursus;
@@ -23,28 +39,32 @@ struct elmRelasi;
 struct elmParent {
     Kursus info;
     elmParent *next;
-    elmRelasi *childList; // head of relasi for this parent
+    elmRelasi *childList; // head of relasi list for this parent
 };
 
 struct elmChild {
     Peserta info;
     elmChild *next;
+    elmChild *prev;       // prev to make DLL
 };
 
 struct elmRelasi {
-    elmChild *child; // pointer to elmChild in ListChild
-    elmRelasi *next;
+    elmChild *child;   // pointer to child node in ListChild
+    elmRelasi *next;   // next relasi in this parent's relasi list
 };
 
 struct ListParent { elmParent *first; };
 struct ListChild  { elmChild  *first;  };
 
-/* ===================== INIT ===================== */
-
+/* =========================
+   INISIALISASI LIST
+   ========================= */
 void createListParent(ListParent &L){ L.first = nullptr; }
 void createListChild(ListChild &L){ L.first = nullptr; }
 
-/* ===================== HELPERS ===================== */
+/* =========================
+   HELPERS UMUM (dipakai semua anggota)
+   ========================= */
 
 elmParent* findParentNode(ListParent &L, const string &id){
     elmParent *p = L.first;
@@ -73,7 +93,9 @@ bool isChildRelasiPresent(elmParent *parentNode, elmChild *childNode){
     return false;
 }
 
-/* ===================== NEW NODES ===================== */
+/* =========================
+   NODE ALLOCATORS
+   ========================= */
 
 elmParent* newParent(const Kursus &x){
     elmParent *p = new elmParent;
@@ -87,6 +109,7 @@ elmChild* newChild(const Peserta &x){
     elmChild *c = new elmChild;
     c->info = x;
     c->next = nullptr;
+    c->prev = nullptr;
     return c;
 }
 
@@ -97,55 +120,9 @@ elmRelasi* newRelasi(elmChild *c){
     return r;
 }
 
-/* ===================== INSERT ===================== */
-
-void insertParent(ListParent &L, const Kursus &x){
-    if(findParentNode(L, x.idKursus)){
-        cout << "[Error] Kursus sudah ada.\n";
-        return;
-    }
-    elmParent *p = newParent(x);
-    if(!L.first) L.first = p;
-    else{
-        elmParent *q = L.first;
-        while(q->next) q = q->next;
-        q->next = p;
-    }
-    cout << "[OK] Kursus ditambahkan: " << x.idKursus << " - " << x.namaKursus << "\n";
-}
-
-void insertChild(ListChild &L, const Peserta &x){
-    if(findChildNode(L, x.idPeserta)){
-        cout << "[Error] Peserta sudah ada.\n";
-        return;
-    }
-    elmChild *c = newChild(x);
-    if(!L.first) L.first = c;
-    else{
-        elmChild *q = L.first;
-        while(q->next) q = q->next;
-        q->next = c;
-    }
-    cout << "[OK] Peserta ditambahkan: " << x.idPeserta << " - " << x.nama << "\n";
-}
-
-void insertRelasi(ListParent &LP, ListChild &LC, const string &idK, const string &idP){
-    elmParent *p = findParentNode(LP, idK);
-    if(!p){ cout << "[Error] Kursus tidak ditemukan.\n"; return; }
-    elmChild *c = findChildNode(LC, idP);
-    if(!c){ cout << "[Error] Peserta tidak ditemukan.\n"; return; }
-    if(isChildRelasiPresent(p, c)){ cout << "[Info] Relasi sudah ada.\n"; return; }
-    elmRelasi *r = newRelasi(c);
-    if(!p->childList) p->childList = r;
-    else{
-        elmRelasi *q = p->childList;
-        while(q->next) q = q->next;
-        q->next = r;
-    }
-    cout << "[OK] Relasi ditambahkan: Peserta " << idP << " -> Kursus " << idK << "\n";
-}
-
-/* ===================== DELETE ===================== */
+/* =========================
+   BERSIHKAN RELASI (helper)
+   ========================= */
 
 void deleteRelasiList(elmRelasi *r){
     while(r){
@@ -155,22 +132,121 @@ void deleteRelasiList(elmRelasi *r){
     }
 }
 
+/* =========================
+   BAGIAN ANGGOTA 1: PARENT LIST (SLL)
+   Fungsi: insertParent (a), deleteParent (d), findParent (g),
+           showAllParent (j), showChildByParent (l), countRelasiPerParent (p)
+   ========================= */
+
+/* a. Insert element parent (Anggota 1) */
+void insertParent(ListParent &L, const Kursus &x){
+    if(findParentNode(L, x.idKursus)){
+        cout << "[Error] Kursus dengan ID '" << x.idKursus << "' sudah ada.\n";
+        return;
+    }
+    elmParent *p = newParent(x);
+    if(!L.first) L.first = p;
+    else{
+        elmParent *q = L.first;
+        while(q->next) q = q->next;
+        q->next = p;
+    }
+    cout << "[OK] Insert Parent: " << x.idKursus << " - " << x.namaKursus << "\n";
+}
+
+/* d. Delete element parent (Anggota 1)
+   - Hapus semua relasi yang berada di parent tersebut (agar tidak bocor memori)
+   - Lepaskan node parent dari chain SLL
+*/
 void deleteParent(ListParent &L, const string &id){
     if(!L.first){ cout << "[Error] Tidak ada kursus.\n"; return; }
     elmParent *p = L.first, *prev = nullptr;
     while(p && p->info.idKursus != id){
-        prev = p;
-        p = p->next;
+        prev = p; p = p->next;
     }
-    if(!p){ cout << "[Error] Kursus tidak ditemukan.\n"; return; }
-    // hapus relasi internal parent
+    if(!p){ cout << "[Error] Kursus '" << id << "' tidak ditemukan.\n"; return; }
+    // delete relasi list of this parent
     if(p->childList) deleteRelasiList(p->childList);
+    // unlink parent
     if(!prev) L.first = p->next;
     else prev->next = p->next;
     delete p;
-    cout << "[OK] Kursus " << id << " dihapus.\n";
+    cout << "[OK] Delete Parent: " << id << "\n";
 }
 
+/* g. Find element parent (Anggota 1) */
+bool findParent(ListParent &L, const string &id){
+    return findParentNode(L,id) != nullptr;
+}
+
+/* j. Show all data di List Parent (Anggota 1) */
+void showAllParent(ListParent &LP){
+    cout << "\n=== LIST KURSUS (Parent) ===\n";
+    elmParent *p = LP.first;
+    if(!p){ cout << "(kosong)\n"; return; }
+    while(p){
+        cout << p->info.idKursus << " | " << p->info.namaKursus
+             << " | " << p->info.durasiJam << " jam"
+             << " | Sertifikat: " << (p->info.sertifikat ? "Ya":"Tidak") << "\n";
+        p = p->next;
+    }
+}
+
+/* l. Show data child dari parent tertentu (Anggota 1)
+   - Traverse relasi list inside parent and print child info via pointer
+*/
+void showChildByParent(ListParent &LP, const string &idK){
+    elmParent *p = findParentNode(LP, idK);
+    if(!p){ cout << "[Error] Kursus '" << idK << "' tidak ditemukan.\n"; return; }
+    cout << "Peserta pada kursus " << p->info.namaKursus << " (" << p->info.idKursus << "):\n";
+    elmRelasi *r = p->childList;
+    if(!r){ cout << " - (Belum ada peserta)\n"; return; }
+    while(r){
+        cout << " * " << r->child->info.idPeserta << " - " << r->child->info.nama << "\n";
+        r = r->next;
+    }
+}
+
+/* p. Count relasi dari setiap element parent (Anggota 1) */
+void countRelasiPerParent(ListParent &LP){
+    cout << "\n=== Count relasi per Kursus ===\n";
+    elmParent *p = LP.first;
+    if(!p){ cout << "(tidak ada kursus)\n"; return; }
+    while(p){
+        int cnt = 0;
+        elmRelasi *r = p->childList;
+        while(r){ cnt++; r = r->next; }
+        cout << p->info.idKursus << " -> " << cnt << " peserta\n";
+        p = p->next;
+    }
+}
+
+/* =========================
+   BAGIAN ANGGOTA 2: CHILD LIST (DLL)
+   Fungsi: insertChild (b), deleteChild (e), findChild (h),
+           showAllChild (k), showParentsByChild (o),
+           countRelasiOfChild (q), countChildWithoutRelasi (r)
+   ========================= */
+
+/* b. Insert element child (Anggota 2) - DLL insert at tail */
+void insertChild(ListChild &L, const Peserta &x){
+    if(findChildNode(L, x.idPeserta)){
+        cout << "[Error] Peserta dengan ID '" << x.idPeserta << "' sudah ada.\n";
+        return;
+    }
+    elmChild *c = newChild(x);
+    if(!L.first){
+        L.first = c;
+    } else {
+        elmChild *q = L.first;
+        while(q->next) q = q->next;
+        q->next = c;
+        c->prev = q; // link backward for DLL
+    }
+    cout << "[OK] Insert Child: " << x.idPeserta << " - " << x.nama << "\n";
+}
+
+/* Helper: remove relasi in one parent's relasi list pointing to target child */
 void removeRelasiPointing(elmRelasi* &head, elmChild *target){
     elmRelasi *r = head, *prev = nullptr;
     while(r){
@@ -187,138 +263,50 @@ void removeRelasiPointing(elmRelasi* &head, elmChild *target){
     }
 }
 
+/* e. Delete element child (Anggota 2) - must handle DLL removal and remove all relasi across parents */
 void deleteChild(ListParent &LP, ListChild &LC, const string &id){
     if(!LC.first){ cout << "[Error] Tidak ada peserta.\n"; return; }
-    elmChild *c = LC.first, *pre = nullptr;
-    while(c && c->info.idPeserta != id){
-        pre = c;
-        c = c->next;
-    }
-    if(!c){ cout << "[Error] Peserta tidak ditemukan.\n"; return; }
-    // hapus semua relasi menuju child di tiap parent
+    elmChild *c = LC.first;
+    while(c && c->info.idPeserta != id) c = c->next;
+    if(!c){ cout << "[Error] Peserta '" << id << "' tidak ditemukan.\n"; return; }
+
+    // Remove relasi pointing to this child from every parent
     elmParent *p = LP.first;
     while(p){
         removeRelasiPointing(p->childList, c);
         p = p->next;
     }
-    if(!pre) LC.first = c->next;
-    else pre->next = c->next;
+
+    // Remove node from DLL
+    if(c->prev) c->prev->next = c->next;
+    else LC.first = c->next; // c was head
+
+    if(c->next) c->next->prev = c->prev;
+
     delete c;
-    cout << "[OK] Peserta " << id << " dihapus beserta relasinya.\n";
+    cout << "[OK] Delete Child: " << id << " (dan semua relasinya dihapus).\n";
 }
 
-void deleteRelasi(ListParent &LP, const string &idK, const string &idP){
-    elmParent *p = findParentNode(LP, idK);
-    if(!p){ cout << "[Error] Kursus tidak ditemukan.\n"; return; }
-    if(!p->childList){ cout << "[Error] Tidak ada relasi pada kursus itu.\n"; return; }
-    elmRelasi *r = p->childList, *prev = nullptr;
-    while(r && r->child->info.idPeserta != idP){
-        prev = r; r = r->next;
-    }
-    if(!r){ cout << "[Error] Relasi tidak ditemukan.\n"; return; }
-    if(!prev) p->childList = r->next;
-    else prev->next = r->next;
-    delete r;
-    cout << "[OK] Relasi Peserta " << idP << " dari Kursus " << idK << " dihapus.\n";
+/* h. Find element child (Anggota 2) */
+bool findChild(ListChild &L, const string &id){
+    return findChildNode(L,id) != nullptr;
 }
 
-/* ===================== FIND ===================== */
-
-bool findParent(ListParent &L, const string &id){ return findParentNode(L,id) != nullptr; }
-bool findChild(ListChild &L, const string &id){ return findChildNode(L,id) != nullptr; }
-
-bool findRelasi(ListParent &LP, const string &idK, const string &idP){
-    elmParent *p = findParentNode(LP, idK);
-    if(!p) return false;
-    elmRelasi *r = p->childList;
-    while(r){
-        if(r->child->info.idPeserta == idP) return true;
-        r = r->next;
-    }
-    return false;
-}
-
-/* ===================== SHOW (m, n, o included) ===================== */
-
-void showAllParent(ListParent &LP){
-    cout << "\n=== LIST KURSUS ===\n";
-    elmParent *p = LP.first;
-    if(!p){ cout << "(Kosong)\n"; return; }
-    while(p){
-        cout << p->info.idKursus << " | " << p->info.namaKursus << " | " 
-             << p->info.durasiJam << " jam | Sertifikat: " << (p->info.sertifikat ? "Ya":"Tidak") << "\n";
-        p = p->next;
-    }
-}
-
+/* k. Show all data di List Child (Anggota 2) */
 void showAllChild(ListChild &LC){
-    cout << "\n=== LIST PESERTA ===\n";
+    cout << "\n=== LIST PESERTA (Child) ===\n";
     elmChild *c = LC.first;
-    if(!c){ cout << "(Kosong)\n"; return; }
+    if(!c){ cout << "(kosong)\n"; return; }
     while(c){
-        cout << c->info.idPeserta << " | " << c->info.nama << " | JK:" << c->info.jenisKelamin 
-             << " | Saldo: " << c->info.saldo << "\n";
+        cout << c->info.idPeserta << " | " << c->info.nama
+             << " | JK:" << c->info.jenisKelamin << " | Saldo:" << c->info.saldo << "\n";
         c = c->next;
     }
 }
 
-// l. Show data child dari parent tertentu
-void showChildByParent(ListParent &LP, const string &idK){
-    elmParent *p = findParentNode(LP, idK);
-    if(!p){ cout << "[Error] Kursus tidak ditemukan.\n"; return; }
-    cout << "\nPeserta pada kursus " << p->info.namaKursus << " (" << p->info.idKursus << "):\n";
-    elmRelasi *r = p->childList;
-    if(!r){ cout << " - (Belum ada peserta)\n"; return; }
-    while(r){
-        cout << " * " << r->child->info.idPeserta << " - " << r->child->info.nama << "\n";
-        r = r->next;
-    }
-}
-
-// m. Show setiap data parent beserta data child yang berelasi dengannya
-void showParentWithChildren(ListParent &LP){
-    cout << "\n=== PARENT BESERTA CHILD (Kursus -> Peserta) ===\n";
-    elmParent *p = LP.first;
-    if(!p){ cout << "(Tidak ada kursus)\n"; return; }
-    while(p){
-        cout << p->info.idKursus << " : " << p->info.namaKursus << "\n";
-        elmRelasi *r = p->childList;
-        if(!r) cout << "  - (Tidak ada peserta)\n";
-        while(r){
-            cout << "    * " << r->child->info.idPeserta << " - " << r->child->info.nama << "\n";
-            r = r->next;
-        }
-        p = p->next;
-    }
-}
-
-// n. Show data child beserta data parent yang masing-masing child miliki
-void showChildWithParents(ListParent &LP, ListChild &LC){
-    cout << "\n=== CHILD BESERTA PARENT (Peserta -> Kursus) ===\n";
-    elmChild *c = LC.first;
-    if(!c){ cout << "(Tidak ada peserta)\n"; return; }
-    while(c){
-        cout << c->info.idPeserta << " : " << c->info.nama << "\n";
-        bool any = false;
-        elmParent *p = LP.first;
-        while(p){
-            elmRelasi *r = p->childList;
-            while(r){
-                if(r->child == c){
-                    cout << "    - " << p->info.idKursus << " : " << p->info.namaKursus << "\n";
-                    any = true;
-                    break;
-                }
-                r = r->next;
-            }
-            p = p->next;
-        }
-        if(!any) cout << "    - (Tidak terdaftar di kursus mana pun)\n";
-        c = c->next;
-    }
-}
-
-// o. Show data parent yang berelasi dengan child tertentu
+/* o. Show data parent yang berelasi dengan child tertentu (Anggota 2)
+   - For a given child id, traverse all parents and check relasi lists.
+*/
 void showParentsByChild(ListParent &LP, const string &idP){
     cout << "\nParents related to Peserta " << idP << ":\n";
     elmParent *p = LP.first;
@@ -329,7 +317,7 @@ void showParentsByChild(ListParent &LP, const string &idP){
             if(r->child->info.idPeserta == idP){
                 cout << " - " << p->info.idKursus << " : " << p->info.namaKursus << "\n";
                 found = true;
-                break;
+                break; // go to next parent
             }
             r = r->next;
         }
@@ -338,30 +326,14 @@ void showParentsByChild(ListParent &LP, const string &idP){
     if(!found) cout << "  (Tidak ada parent yang berelasi)\n";
 }
 
-/* ===================== COUNT (p, q, r) ===================== */
-
-// p. Count relation dari setiap element parent
-void countRelasiPerParent(ListParent &LP){
-    cout << "\n=== Jumlah relasi per parent (Kursus) ===\n";
-    elmParent *p = LP.first;
-    if(!p){ cout << "(Tidak ada kursus)\n"; return; }
-    while(p){
-        int cnt = 0;
-        elmRelasi *r = p->childList;
-        while(r){ cnt++; r = r->next; }
-        cout << p->info.idKursus << " -> " << cnt << " peserta\n";
-        p = p->next;
-    }
-}
-
-// q. Count relation yang dimiliki oleh child tertentu
+/* q. Count relation yang dimiliki oleh child tertentu (Anggota 2) */
 int countRelasiOfChild(ListParent &LP, const string &idP){
     int cnt = 0;
     elmParent *p = LP.first;
     while(p){
         elmRelasi *r = p->childList;
         while(r){
-            if(r->child->info.idPeserta == idP) cnt++;
+            if(r->child->info.idPeserta == idP){ cnt++; break; } // count each parent max once
             r = r->next;
         }
         p = p->next;
@@ -369,7 +341,7 @@ int countRelasiOfChild(ListParent &LP, const string &idP){
     return cnt;
 }
 
-// r. Count element child yang tidak memiliki relasi
+/* r. Count element child yang tidak memiliki relasi (Anggota 2) */
 int countChildWithoutRelasi(ListParent &LP, ListChild &LC){
     int cnt = 0;
     elmChild *c = LC.first;
@@ -390,32 +362,130 @@ int countChildWithoutRelasi(ListParent &LP, ListChild &LC){
     return cnt;
 }
 
-/* ===================== EDIT RELASI (s) ===================== */
+/* =========================
+   BAGIAN ANGGOTA 3: RELASI (disimpan di parent)
+   Fungsi: insertRelasi (c), deleteRelasi (f), findRelasi (i),
+           showParentWithChildren (m), showChildWithParents (n), editRelasiReplaceChild (s)
+   ========================= */
 
-// s. Edit relasi / mengganti child dari parent tertentu
-bool editRelasiReplaceChild(ListParent &LP, ListChild &LC, const string &idKursus, const string &oldIdPeserta, const string &newIdPeserta){
+/* c. Insert element relasi (Anggota 3) */
+void insertRelasi(ListParent &LP, ListChild &LC, const string &idK, const string &idP){
+    elmParent *p = findParentNode(LP, idK);
+    if(!p){ cout << "[Error] Kursus '" << idK << "' tidak ditemukan.\n"; return; }
+    elmChild *c = findChildNode(LC, idP);
+    if(!c){ cout << "[Error] Peserta '" << idP << "' tidak ditemukan.\n"; return; }
+    if(isChildRelasiPresent(p, c)){ cout << "[Info] Relasi sudah ada.\n"; return; }
+    elmRelasi *r = newRelasi(c);
+    if(!p->childList) p->childList = r;
+    else{
+        elmRelasi *q = p->childList;
+        while(q->next) q = q->next;
+        q->next = r;
+    }
+    cout << "[OK] Insert Relasi: Peserta " << idP << " -> Kursus " << idK << "\n";
+}
+
+/* f. Delete element relasi (Anggota 3) */
+void deleteRelasi(ListParent &LP, const string &idK, const string &idP){
+    elmParent *p = findParentNode(LP, idK);
+    if(!p){ cout << "[Error] Kursus '" << idK << "' tidak ditemukan.\n"; return; }
+    if(!p->childList){ cout << "[Error] Tidak ada relasi pada kursus tersebut.\n"; return; }
+    elmRelasi *r = p->childList, *prev = nullptr;
+    while(r && r->child->info.idPeserta != idP){
+        prev = r; r = r->next;
+    }
+    if(!r){ cout << "[Error] Relasi Peserta '" << idP << "' tidak ditemukan pada Kursus '" << idK << "'.\n"; return; }
+    if(!prev) p->childList = r->next;
+    else prev->next = r->next;
+    delete r;
+    cout << "[OK] Delete Relasi: Peserta " << idP << " dari Kursus " << idK << "\n";
+}
+
+/* i. Find element relation (Anggota 3) */
+bool findRelasi(ListParent &LP, const string &idK, const string &idP){
+    elmParent *p = findParentNode(LP, idK);
+    if(!p) return false;
+    elmRelasi *r = p->childList;
+    while(r){
+        if(r->child->info.idPeserta == idP) return true;
+        r = r->next;
+    }
+    return false;
+}
+
+/* m. Show setiap data parent beserta data child yang berelasi dengannya (Anggota 3) */
+void showParentWithChildren(ListParent &LP){
+    cout << "\n=== PARENT BESERTA CHILD (Kursus -> Peserta) ===\n";
+    elmParent *p = LP.first;
+    if(!p){ cout << "(Tidak ada kursus)\n"; return; }
+    while(p){
+        cout << p->info.idKursus << " : " << p->info.namaKursus << "\n";
+        elmRelasi *r = p->childList;
+        if(!r) cout << "  - (Tidak ada peserta)\n";
+        while(r){
+            cout << "    * " << r->child->info.idPeserta << " - " << r->child->info.nama << "\n";
+            r = r->next;
+        }
+        p = p->next;
+    }
+}
+
+/* n. Show data child beserta data parent yang masing-masing child miliki (Anggota 3)
+   - Output: setiap child diikuti daftar parent (kursus) yang mereferensikannya
+*/
+void showChildWithParents(ListParent &LP, ListChild &LC){
+    cout << "\n=== CHILD BESERTA PARENT (Peserta -> Kursus) ===\n";
+    elmChild *c = LC.first;
+    if(!c){ cout << "(Tidak ada peserta)\n"; return; }
+    while(c){
+        cout << c->info.idPeserta << " : " << c->info.nama << "\n";
+        bool any = false;
+        elmParent *p = LP.first;
+        while(p){
+            elmRelasi *r = p->childList;
+            while(r){
+                if(r->child == c){
+                    cout << "    - " << p->info.idKursus << " : " << p->info.namaKursus << "\n";
+                    any = true;
+                    break; // one parent printed once
+                }
+                r = r->next;
+            }
+            p = p->next;
+        }
+        if(!any) cout << "    - (Tidak terdaftar di kursus mana pun)\n";
+        c = c->next;
+    }
+}
+
+/* s. Edit relasi / mengganti child dari parent tertentu (Anggota 3)
+   - Ganti pointer relasi yang menunjuk ke old child menjadi new child
+   - Validasi: parent ada, old child ada, new child ada, new relasi belum ada
+*/
+bool editRelasiReplaceChild(ListParent &LP, ListChild &LC,
+                            const string &idKursus, const string &oldIdPeserta, const string &newIdPeserta){
     elmParent *p = findParentNode(LP, idKursus);
-    if(!p){ cout << "[Error] Kursus tidak ditemukan.\n"; return false; }
+    if(!p){ cout << "[Error] Kursus '" << idKursus << "' tidak ditemukan.\n"; return false; }
     elmChild *oldC = findChildNode(LC, oldIdPeserta);
-    if(!oldC){ cout << "[Error] Peserta lama tidak ditemukan.\n"; return false; }
+    if(!oldC){ cout << "[Error] Peserta lama '" << oldIdPeserta << "' tidak ditemukan.\n"; return false; }
     elmChild *newC = findChildNode(LC, newIdPeserta);
-    if(!newC){ cout << "[Error] Peserta baru tidak ditemukan.\n"; return false; }
+    if(!newC){ cout << "[Error] Peserta baru '" << newIdPeserta << "' tidak ditemukan.\n"; return false; }
+
     elmRelasi *r = p->childList;
     while(r){
         if(r->child == oldC){
             if(isChildRelasiPresent(p, newC)){ cout << "[Info] Relasi baru sudah ada; abort.\n"; return false; }
-            r->child = newC;
-            cout << "[OK] Relasi diganti pada Kursus " << idKursus << ": " << oldIdPeserta << " -> " << newIdPeserta << "\n";
+            r->child = newC; // replace pointer
+            cout << "[OK] Edit Relasi: di Kursus " << idKursus << " ganti " << oldIdPeserta << " -> " << newIdPeserta << "\n";
             return true;
         }
         r = r->next;
     }
-    cout << "[Error] Relasi lama tidak ditemukan di kursus tersebut.\n";
+    cout << "[Error] Relasi lama '" << oldIdPeserta << "' tidak ditemukan di kursus '" << idKursus << "'.\n";
     return false;
 }
 
-/* ===================== CLEAR ALL ===================== */
-
+//clean up
 void clearAll(ListParent &LP, ListChild &LC){
     // delete parents and their relasi lists
     elmParent *p = LP.first;
@@ -426,18 +496,19 @@ void clearAll(ListParent &LP, ListChild &LC){
         delete tmp;
     }
     LP.first = nullptr;
-    // delete children
+    // delete children (DLL)
     elmChild *c = LC.first;
     while(c){
-        elmChild *tmp = c; c = c->next; delete tmp;
+        elmChild *tmp = c;
+        c = c->next;
+        delete tmp;
     }
     LC.first = nullptr;
 }
 
-/* ===================== MENU ===================== */
-
+//menu
 void printMenu(){
-    cout << "\n===== SISTEM MLL: Kursus & Peserta (Tipe A) =====\n";
+    cout << "\n===== SISTEM MLL: Kursus & Peserta (TIPE A) =====\n";
     cout << "1  - Insert Kursus (parent)\n";
     cout << "2  - Insert Peserta (child)\n";
     cout << "3  - Insert Relasi\n";
@@ -462,111 +533,171 @@ void printMenu(){
     cout << "Pilih opsi: ";
 }
 
-/* ===================== MAIN ===================== */
-
+/* =========================
+   MAIN
+   ========================= */
 int main(){
-    ListParent LP; ListChild LC;
-    createListParent(LP); createListChild(LC);
+    ListParent LP; 
+    ListChild LC;
+    createListParent(LP); 
+    createListChild(LC);
 
-    int opt = -1;
+    int opt;
+
     while(true){
         printMenu();
-        if(!(cin >> opt)){ cin.clear(); cin.ignore(1000,'\n'); cout << "Input invalid\n"; continue; }
-        cin.ignore(1000,'\n');
+        cin >> opt;
+        cin.ignore(1000, '\n');
 
-        if(opt == 0) break;
+        switch(opt){
+        case 0:
+            clearAll(LP, LC);
+            cout << "Keluar. Data dibersihkan.\n";
+            return 0;
 
-        if(opt == 1){
+        case 1: { 
+            // Insert Parent
             Kursus k;
             cout << "ID Kursus: "; getline(cin, k.idKursus);
             cout << "Nama Kursus: "; getline(cin, k.namaKursus);
             cout << "Durasi (jam): "; cin >> k.durasiJam; cin.ignore();
             cout << "Sertifikat? (y/n): ";
             char s; cin >> s; cin.ignore();
-            k.sertifikat = (s=='y' || s=='Y');
+            k.sertifikat = (s == 'y' || s == 'Y');
             insertParent(LP, k);
+            break;
         }
-        else if(opt == 2){
+
+        case 2: {
+            // Insert Child
             Peserta p;
             cout << "ID Peserta: "; getline(cin, p.idPeserta);
             cout << "Nama Peserta: "; getline(cin, p.nama);
-            cout << "Jenis Kelamin (L/P): "; cin >> p.jenisKelamin; cout << "\n";
+            cout << "Jenis Kelamin (L/P): "; cin >> p.jenisKelamin; cin.ignore();
             cout << "Saldo: "; cin >> p.saldo; cin.ignore();
             insertChild(LC, p);
+            break;
         }
-        else if(opt == 3){
+
+        case 3: {
+            // Insert Relasi
             string idK, idP;
             cout << "ID Kursus: "; getline(cin, idK);
             cout << "ID Peserta: "; getline(cin, idP);
             insertRelasi(LP, LC, idK, idP);
+            break;
         }
-        else if(opt == 4){
-            string id; cout << "ID Kursus to delete: "; getline(cin, id);
+
+        case 4: {
+            string id;
+            cout << "ID Kursus to delete: "; getline(cin, id);
             deleteParent(LP, id);
+            break;
         }
-        else if(opt == 5){
-            string id; cout << "ID Peserta to delete: "; getline(cin, id);
+
+        case 5: {
+            string id;
+            cout << "ID Peserta to delete: "; getline(cin, id);
             deleteChild(LP, LC, id);
+            break;
         }
-        else if(opt == 6){
+
+        case 6: {
             string idK, idP;
             cout << "ID Kursus: "; getline(cin, idK);
             cout << "ID Peserta: "; getline(cin, idP);
             deleteRelasi(LP, idK, idP);
+            break;
         }
-        else if(opt == 7){
-            string id; cout << "ID Kursus to find: "; getline(cin, id);
+
+        case 7: {
+            string id;
+            cout << "ID Kursus to find: "; getline(cin, id);
             cout << (findParent(LP,id) ? "Ditemukan\n" : "Tidak ditemukan\n");
+            break;
         }
-        else if(opt == 8){
-            string id; cout << "ID Peserta to find: "; getline(cin, id);
+
+        case 8: {
+            string id;
+            cout << "ID Peserta to find: "; getline(cin, id);
             cout << (findChild(LC,id) ? "Ditemukan\n" : "Tidak ditemukan\n");
+            break;
         }
-        else if(opt == 9){
+
+        case 9: {
             string idK, idP;
             cout << "ID Kursus: "; getline(cin, idK);
             cout << "ID Peserta: "; getline(cin, idP);
             cout << (findRelasi(LP,idK,idP) ? "Relasi ada\n" : "Relasi tidak ada\n");
+            break;
         }
-        else if(opt == 10) showAllParent(LP);
-        else if(opt == 11) showAllChild(LC);
-        else if(opt == 12){
-            string id; cout << "ID Kursus: "; getline(cin, id);
+
+        case 10:
+            showAllParent(LP);
+            break;
+
+        case 11:
+            showAllChild(LC);
+            break;
+
+        case 12: {
+            string id;
+            cout << "ID Kursus: "; getline(cin, id);
             showChildByParent(LP, id);
+            break;
         }
-        else if(opt == 13) showParentWithChildren(LP);
-        else if(opt == 14) showChildWithParents(LP, LC);
-        else if(opt == 15){
-            string id; cout << "ID Peserta: "; getline(cin, id);
+
+        case 13:
+            showParentWithChildren(LP);
+            break;
+
+        case 14:
+            showChildWithParents(LP, LC);
+            break;
+
+        case 15: {
+            string id;
+            cout << "ID Peserta: "; getline(cin, id);
             showParentsByChild(LP, id);
+            break;
         }
-        else if(opt == 16) countRelasiPerParent(LP);
-        else if(opt == 17){
-            string id; cout << "ID Peserta: "; getline(cin, id);
+
+        case 16:
+            countRelasiPerParent(LP);
+            break;
+
+        case 17: {
+            string id;
+            cout << "ID Peserta: "; getline(cin, id);
             cout << "Jumlah relasi: " << countRelasiOfChild(LP, id) << "\n";
+            break;
         }
-        else if(opt == 18){
-            cout << "Jumlah peserta tanpa relasi: " << countChildWithoutRelasi(LP, LC) << "\n";
-        }
-        else if(opt == 19){
+
+        case 18:
+            cout << "Jumlah peserta tanpa relasi: " 
+                 << countChildWithoutRelasi(LP, LC) << "\n";
+            break;
+
+        case 19: {
             string idK, oldId, newId;
             cout << "ID Kursus: "; getline(cin, idK);
             cout << "Old ID Peserta (yang mau diganti): "; getline(cin, oldId);
             cout << "New ID Peserta (pengganti): "; getline(cin, newId);
             editRelasiReplaceChild(LP, LC, idK, oldId, newId);
+            break;
         }
-        else if(opt == 20){
+
+        case 20:
             clearAll(LP, LC);
-            createListParent(LP); createListChild(LC);
+            createListParent(LP);
+            createListChild(LC);
             cout << "Semua data direset.\n";
-        }
-        else {
+            break;
+
+        default:
             cout << "Opsi tidak valid.\n";
         }
     }
 
-    // cleanup
-    clearAll(LP, LC);
-    cout << "Keluar. Data dibersihkan.\n";
     return 0;
 }
