@@ -1,8 +1,3 @@
-// Progress 2 (~80%) - Sistem Manajemen Kursus & Peserta (Multi Linked List - TIPE A)
-// - Parent: Single Linked List (SLL)
-// - Child : Double Linked List (DLL)
-
-
 #include <iostream>
 #include <string>
 using namespace std;
@@ -19,7 +14,7 @@ struct Peserta {
     string idPeserta;
     string nama;
     char jenisKelamin;
-    int saldo; // INT sesuai preferensi
+    int saldo;
 };
 
 struct elmChild;
