@@ -124,10 +124,9 @@ void insertParent(ListParent &L, const Kursus &x){
     cout << "[OK] Insert Parent: " << x.idKursus << " - " << x.namaKursus << "\n";
 }
 
-/* d. Delete element parent (Anggota 1)
-   - Hapus semua relasi yang berada di parent tersebut (agar tidak bocor memori)
-   - Lepaskan node parent dari chain SLL
-*/
+//  d. Delete element parent (Anggota 1)
+//   - Hapus semua relasi yang berada di parent tersebut (agar tidak bocor memori)
+//   - Lepaskan node parent dari chain SLL
 void deleteParent(ListParent &L, const string &id){
     if(!L.first){ cout << "[Error] Tidak ada kursus.\n"; return; }
     elmParent *p = L.first, *prev = nullptr;
@@ -144,12 +143,12 @@ void deleteParent(ListParent &L, const string &id){
     cout << "[OK] Delete Parent: " << id << "\n";
 }
 
-/* g. Find element parent (Anggota 1) */
+// g. Find element parent
 bool findParent(ListParent &L, const string &id){
     return findParentNode(L,id) != nullptr;
 }
 
-/* j. Show all data di List Parent (Anggota 1) */
+//  j. Show all data di List Parent
 void showAllParent(ListParent &LP){
     cout << "\n=== LIST KURSUS (Parent) ===\n";
     elmParent *p = LP.first;
@@ -162,9 +161,7 @@ void showAllParent(ListParent &LP){
     }
 }
 
-/* l. Show data child dari parent tertentu (Anggota 1)
-   - Traverse relasi list inside parent and print child info via pointer
-*/
+//  l. Show data child dari parent tertentu
 void showChildByParent(ListParent &LP, const string &idK){
     elmParent *p = findParentNode(LP, idK);
     if(!p){ cout << "[Error] Kursus '" << idK << "' tidak ditemukan.\n"; return; }
@@ -177,7 +174,7 @@ void showChildByParent(ListParent &LP, const string &idK){
     }
 }
 
-/* p. Count relasi dari setiap element parent (Anggota 1) */
+// p. Count relasi dari setiap element parent
 void countRelasiPerParent(ListParent &LP){
     cout << "\n=== Count relasi per Kursus ===\n";
     elmParent *p = LP.first;
@@ -191,12 +188,8 @@ void countRelasiPerParent(ListParent &LP){
     }
 }
 
-/* =========================
-   BAGIAN ANGGOTA 2: CHILD LIST (DLL)
-   Fungsi: insertChild (b), deleteChild (e), findChild (h),
-           showAllChild (k), showParentsByChild (o),
-           countRelasiOfChild (q), countChildWithoutRelasi (r)
-   ========================= */
+
+//   AGIAN ANGGOTA 2: CHILD LIST (DLL)
 
 /* b. Insert element child (Anggota 2) - DLL insert at tail */
 void insertChild(ListChild &L, const Peserta &x){
