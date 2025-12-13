@@ -1,24 +1,8 @@
-// mll_typeA_final.cpp
-// Sistem Manajemen Kursus & Peserta (Multi Linked List - TIPE A)
-// - Parent: Single Linked List (SLL)
-// - Child : Double Linked List (DLL)
-// - Relasi: disimpan di setiap parent (list relasi yang menunjuk ke node child)
-
 #include <iostream>
 #include <string>
 using namespace std;
 
-/* =========================
-   TIPE DATA (STRUCT)
-   =========================
-   Parent (Kursus)  : 4 atribut (id, nama, durasi int, sertifikat bool)
-   Child  (Peserta) : 4 atribut (id, nama, jenisKelamin char, saldo int)
-   Nodes:
-    - elmParent: info Kursus, next (SLL), childList (head of relasi)
-    - elmChild : info Peserta, next + prev (DLL)
-    - elmRelasi : pointer to elmChild, next (SLL for relasi chain)
-*/
-
+//struct
 struct Kursus {
     string idKursus;
     string namaKursus;
@@ -39,32 +23,28 @@ struct elmRelasi;
 struct elmParent {
     Kursus info;
     elmParent *next;
-    elmRelasi *childList; // head of relasi list for this parent
+    elmRelasi *childList;
 };
 
 struct elmChild {
     Peserta info;
     elmChild *next;
-    elmChild *prev;       // prev to make DLL
+    elmChild *prev;  
 };
 
 struct elmRelasi {
-    elmChild *child;   // pointer to child node in ListChild
-    elmRelasi *next;   // next relasi in this parent's relasi list
+    elmChild *child;  
+    elmRelasi *next; 
 };
 
 struct ListParent { elmParent *first; };
 struct ListChild  { elmChild  *first;  };
 
-/* =========================
-   INISIALISASI LIST
-   ========================= */
+
 void createListParent(ListParent &L){ L.first = nullptr; }
 void createListChild(ListChild &L){ L.first = nullptr; }
 
-/* =========================
-   HELPERS UMUM (dipakai semua anggota)
-   ========================= */
+
 
 elmParent* findParentNode(ListParent &L, const string &id){
     elmParent *p = L.first;
@@ -93,9 +73,6 @@ bool isChildRelasiPresent(elmParent *parentNode, elmChild *childNode){
     return false;
 }
 
-/* =========================
-   NODE ALLOCATORS
-   ========================= */
 
 elmParent* newParent(const Kursus &x){
     elmParent *p = new elmParent;
@@ -120,9 +97,6 @@ elmRelasi* newRelasi(elmChild *c){
     return r;
 }
 
-/* =========================
-   BERSIHKAN RELASI (helper)
-   ========================= */
 
 void deleteRelasiList(elmRelasi *r){
     while(r){
@@ -132,13 +106,9 @@ void deleteRelasiList(elmRelasi *r){
     }
 }
 
-/* =========================
-   BAGIAN ANGGOTA 1: PARENT LIST (SLL)
-   Fungsi: insertParent (a), deleteParent (d), findParent (g),
-           showAllParent (j), showChildByParent (l), countRelasiPerParent (p)
-   ========================= */
+// BAGIAN ANGGOTA 1: PARENT LIST (SLL)
 
-/* a. Insert element parent (Anggota 1) */
+// a. Insert element parent (Anggota 1)
 void insertParent(ListParent &L, const Kursus &x){
     if(findParentNode(L, x.idKursus)){
         cout << "[Error] Kursus dengan ID '" << x.idKursus << "' sudah ada.\n";
