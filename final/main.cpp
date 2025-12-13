@@ -357,7 +357,7 @@ void deleteRelasi(ListParent &LP, const string &idK, const string &idP){
     cout << "[OK] Delete Relasi: Peserta " << idP << " dari Kursus " << idK << "\n";
 }
 
-/* i. Find element relation (Anggota 3) */
+// i. Find element relation (Anggota 3)
 bool findRelasi(ListParent &LP, const string &idK, const string &idP){
     elmParent *p = findParentNode(LP, idK);
     if(!p) return false;
@@ -369,7 +369,7 @@ bool findRelasi(ListParent &LP, const string &idK, const string &idP){
     return false;
 }
 
-/* m. Show setiap data parent beserta data child yang berelasi dengannya (Anggota 3) */
+// m. Show setiap data parent beserta data child yang berelasi dengannya (Anggota 3)
 void showParentWithChildren(ListParent &LP){
     cout << "\n=== PARENT BESERTA CHILD (Kursus -> Peserta) ===\n";
     elmParent *p = LP.first;
@@ -386,9 +386,7 @@ void showParentWithChildren(ListParent &LP){
     }
 }
 
-/* n. Show data child beserta data parent yang masing-masing child miliki (Anggota 3)
-   - Output: setiap child diikuti daftar parent (kursus) yang mereferensikannya
-*/
+//n. Show data child beserta data parent yang masing-masing child miliki
 void showChildWithParents(ListParent &LP, ListChild &LC){
     cout << "\n=== CHILD BESERTA PARENT (Peserta -> Kursus) ===\n";
     elmChild *c = LC.first;
@@ -414,10 +412,7 @@ void showChildWithParents(ListParent &LP, ListChild &LC){
     }
 }
 
-/* s. Edit relasi / mengganti child dari parent tertentu (Anggota 3)
-   - Ganti pointer relasi yang menunjuk ke old child menjadi new child
-   - Validasi: parent ada, old child ada, new child ada, new relasi belum ada
-*/
+// s. Edit relasi / mengganti child dari parent tertentu
 bool editRelasiReplaceChild(ListParent &LP, ListChild &LC,
                             const string &idKursus, const string &oldIdPeserta, const string &newIdPeserta){
     elmParent *p = findParentNode(LP, idKursus);
