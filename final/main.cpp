@@ -191,7 +191,7 @@ void countRelasiPerParent(ListParent &LP){
 
 //   AGIAN ANGGOTA 2: CHILD LIST (DLL)
 
-/* b. Insert element child (Anggota 2) - DLL insert at tail */
+// b. Insert element child - DLL insert at tail
 void insertChild(ListChild &L, const Peserta &x){
     if(findChildNode(L, x.idPeserta)){
         cout << "[Error] Peserta dengan ID '" << x.idPeserta << "' sudah ada.\n";
@@ -226,7 +226,7 @@ void removeRelasiPointing(elmRelasi* &head, elmChild *target){
     }
 }
 
-/* e. Delete element child (Anggota 2) - must handle DLL removal and remove all relasi across parents */
+// e. Delete element child (Anggota 2) - must handle DLL removal and remove all relasi across parents
 void deleteChild(ListParent &LP, ListChild &LC, const string &id){
     if(!LC.first){ cout << "[Error] Tidak ada peserta.\n"; return; }
     elmChild *c = LC.first;
@@ -250,12 +250,12 @@ void deleteChild(ListParent &LP, ListChild &LC, const string &id){
     cout << "[OK] Delete Child: " << id << " (dan semua relasinya dihapus).\n";
 }
 
-/* h. Find element child (Anggota 2) */
+// h. Find element child (Anggota 2)
 bool findChild(ListChild &L, const string &id){
     return findChildNode(L,id) != nullptr;
 }
 
-/* k. Show all data di List Child (Anggota 2) */
+// k. Show all data di List Child (Anggota 2)
 void showAllChild(ListChild &LC){
     cout << "\n=== LIST PESERTA (Child) ===\n";
     elmChild *c = LC.first;
@@ -267,9 +267,7 @@ void showAllChild(ListChild &LC){
     }
 }
 
-/* o. Show data parent yang berelasi dengan child tertentu (Anggota 2)
-   - For a given child id, traverse all parents and check relasi lists.
-*/
+//o. Show data parent yang berelasi dengan child tertentu
 void showParentsByChild(ListParent &LP, const string &idP){
     cout << "\nParents related to Peserta " << idP << ":\n";
     elmParent *p = LP.first;
@@ -289,7 +287,7 @@ void showParentsByChild(ListParent &LP, const string &idP){
     if(!found) cout << "  (Tidak ada parent yang berelasi)\n";
 }
 
-/* q. Count relation yang dimiliki oleh child tertentu (Anggota 2) */
+// q. Count relation yang dimiliki oleh child tertentu
 int countRelasiOfChild(ListParent &LP, const string &idP){
     int cnt = 0;
     elmParent *p = LP.first;
@@ -304,7 +302,7 @@ int countRelasiOfChild(ListParent &LP, const string &idP){
     return cnt;
 }
 
-/* r. Count element child yang tidak memiliki relasi (Anggota 2) */
+// r. Count element child yang tidak memiliki relasi
 int countChildWithoutRelasi(ListParent &LP, ListChild &LC){
     int cnt = 0;
     elmChild *c = LC.first;
@@ -325,13 +323,8 @@ int countChildWithoutRelasi(ListParent &LP, ListChild &LC){
     return cnt;
 }
 
-/* =========================
-   BAGIAN ANGGOTA 3: RELASI (disimpan di parent)
-   Fungsi: insertRelasi (c), deleteRelasi (f), findRelasi (i),
-           showParentWithChildren (m), showChildWithParents (n), editRelasiReplaceChild (s)
-   ========================= */
+// BAGIAN ANGGOTA 3: RELASI (disimpan di parent)
 
-/* c. Insert element relasi (Anggota 3) */
 void insertRelasi(ListParent &LP, ListChild &LC, const string &idK, const string &idP){
     elmParent *p = findParentNode(LP, idK);
     if(!p){ cout << "[Error] Kursus '" << idK << "' tidak ditemukan.\n"; return; }
@@ -496,9 +489,7 @@ void printMenu(){
     cout << "Pilih opsi: ";
 }
 
-/* =========================
-   MAIN
-   ========================= */
+//main program
 int main(){
     ListParent LP; 
     ListChild LC;
