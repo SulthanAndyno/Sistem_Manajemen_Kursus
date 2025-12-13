@@ -226,7 +226,7 @@ void removeRelasiPointing(elmRelasi* &head, elmChild *target){
     }
 }
 
-// e. Delete element child (Anggota 2) - must handle DLL removal and remove all relasi across parents
+//e. Delete element child (Anggota 2) - must handle DLL removal and remove all relasi across parents
 void deleteChild(ListParent &LP, ListChild &LC, const string &id){
     if(!LC.first){ cout << "[Error] Tidak ada peserta.\n"; return; }
     elmChild *c = LC.first;
