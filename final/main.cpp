@@ -341,7 +341,7 @@ void insertRelasi(ListParent &LP, ListChild &LC, const string &idK, const string
     cout << "[OK] Insert Relasi: Peserta " << idP << " -> Kursus " << idK << "\n";
 }
 
-/* f. Delete element relasi (Anggota 3) */
+// f. Delete element relasi
 void deleteRelasi(ListParent &LP, const string &idK, const string &idP){
     elmParent *p = findParentNode(LP, idK);
     if(!p){ cout << "[Error] Kursus '" << idK << "' tidak ditemukan.\n"; return; }
