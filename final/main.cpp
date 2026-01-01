@@ -189,7 +189,7 @@ void countRelasiPerParent(ListParent &LP){
 }
 
 
-//   AGIAN ANGGOTA 2: CHILD LIST (DLL)
+//   BAGIAN ANGGOTA 2: CHILD LIST (DLL)
 
 // b. Insert element child - DLL insert at tail
 void insertChild(ListChild &L, const Peserta &x){
